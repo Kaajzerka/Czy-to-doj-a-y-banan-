@@ -19,6 +19,9 @@
     img {
       max-height: 300px;
       margin: 20px 0;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     .answers button {
       padding: 10px 20px;
@@ -49,6 +52,11 @@
       cursor: pointer;
       display: none;
     }
+    .result {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -58,7 +66,7 @@
 
   <img id="bananaImage" src="" alt="banan" />
 
-  <div class="answers">
+  <div class="answers" id="answerButtons">
     <button onclick="vote('niedojrzały')">niedojrzały</button>
     <button onclick="vote('nie dojrzały')">nie dojrzały</button>
     <button onclick="vote('jeszcze nie dojrzały')">jeszcze nie dojrzały</button>
@@ -68,6 +76,7 @@
     <button onclick="vote('za bardzo dojrzały')">za bardzo dojrzały</button>
   </div>
 
+  <div class="result" id="resultText"></div>
   <div class="stats" id="stats"></div>
 
   <button id="nextBtn" onclick="nextBanana()">Losuj kolejnego 🍌</button>
@@ -84,21 +93,38 @@
     ];
 
     let currentBanana = 0;
-    let votes = {}; // { bananID: {opcja: liczba, ...}, ... }
+    let votes = {}; // { bananX: { 'nazwa': liczba } }
 
     function loadBanana() {
       currentBanana = Math.floor(Math.random() * 7) + 1;
       document.getElementById('bananaImage').src = `banan${currentBanana}.png`;
+      document.getElementById('bananaImage').style.display = 'block';
+      document.getElementById('resultText').innerHTML = '';
       document.getElementById('stats').innerHTML = '';
       document.getElementById('nextBtn').style.display = 'none';
+      document.getElementById('answerButtons').style.display = 'block';
     }
 
-    function vote(option) {
+    function vote(answer) {
       const key = `banan${currentBanana}`;
-      if (!votes[key]) votes[key] = {};
-      if (!votes[key][option]) votes[key][option] = 0;
-      votes[key][option]++;
+      const correct = bananaDescriptions[currentBanana - 1];
 
+      // Zapisz głos
+      if (!votes[key]) votes[key] = {};
+      if (!votes[key][answer]) votes[key][answer] = 0;
+      votes[key][answer]++;
+
+      // Ukryj obrazek i przyciski
+      document.getElementById('bananaImage').style.display = 'none';
+      document.getElementById('answerButtons').style.display = 'none';
+
+      // Pokaż wynik
+      const resultText = (answer === correct)
+        ? "✅ Dobra odpowiedź!"
+        : `❌ Zła odpowiedź! Prawidłowo: <strong>${correct}</strong>`;
+      document.getElementById('resultText').innerHTML = resultText;
+
+      // Pokaż statystyki
       showStats(key);
       document.getElementById('nextBtn').style.display = 'inline-block';
     }
@@ -106,9 +132,11 @@
     function showStats(key) {
       const statDiv = document.getElementById('stats');
       const stats = votes[key];
+      const totalVotes = Object.values(stats).reduce((a, b) => a + b, 0);
       let html = `<h3>Statystyki dla ${key}.png</h3><ul>`;
-      for (const [opcja, liczba] of Object.entries(stats)) {
-        html += `<li>${opcja}: ${liczba} głosów</li>`;
+      for (const [option, count] of Object.entries(stats)) {
+        const percent = ((count / totalVotes) * 100).toFixed(1);
+        html += `<li>${option}: ${count} głosów (${percent}%)</li>`;
       }
       html += '</ul>';
       statDiv.innerHTML = html;
@@ -118,6 +146,7 @@
       loadBanana();
     }
 
+    // Start od razu
     loadBanana();
   </script>
 
